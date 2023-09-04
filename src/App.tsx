@@ -2,6 +2,7 @@ import { FC, useState } from "react";
 import "@aws-amplify/ui-react/styles.css";
 import {
   Flex,
+  Loader,
   Menu,
   MenuItem,
   TextField,
@@ -21,8 +22,10 @@ const openai = new OpenAI(configuration);
 
 const App: FC<WithAuthenticatorProps> = ({ signOut }) => {
   const [rap, setRap] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const getRap = async (prompt: string) => {
+    setLoading(true);
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
@@ -39,8 +42,8 @@ const App: FC<WithAuthenticatorProps> = ({ signOut }) => {
       temperature: 0.8,
     });
 
-    console.log(response);
     setRap(response.choices[0].message.content as string);
+    setLoading(false);
   };
 
   const handleSubmit = (event: any) => {
@@ -74,6 +77,7 @@ const App: FC<WithAuthenticatorProps> = ({ signOut }) => {
           </View>
 
           <View>
+            {loading ? <Loader /> : null}
             <View as="span">{rap}</View>
           </View>
         </Flex>
