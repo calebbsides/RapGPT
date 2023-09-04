@@ -8,7 +8,7 @@ run locally using:
 
 `npm run dev`
 
-published to AWS account: 386459093106
+published to AWS account: `386459093106`
 
 for the API to work, you will need a .env with:
 
