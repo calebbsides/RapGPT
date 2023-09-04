@@ -1,6 +1,6 @@
-/*global rapGPT _config AmazonCognitoIdentity AWSCognito*/
+/*global WildRydes _config AmazonCognitoIdentity AWSCognito*/
 
-var rapGPT = window.rapGPT || {};
+var WildRydes = window.WildRydes || {};
 
 (function scopeWrapper($) {
   var signinUrl = "/signin.html";
@@ -29,11 +29,11 @@ var rapGPT = window.rapGPT || {};
     AWSCognito.config.region = _config.cognito.region;
   }
 
-  rapGPT.signOut = function signOut() {
+  WildRydes.signOut = function signOut() {
     userPool.getCurrentUser().signOut();
   };
 
-  rapGPT.authToken = new Promise(function fetchCurrentAuthToken(
+  WildRydes.authToken = new Promise(function fetchCurrentAuthToken(
     resolve,
     reject
   ) {
