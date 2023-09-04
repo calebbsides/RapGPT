@@ -17,7 +17,7 @@ import {
   createNote as createNoteMutation,
   deleteNote as deleteNoteMutation,
 } from "./graphql/mutations";
-import { Note } from "./API";
+import { CreateNoteInput, Note } from "./API";
 
 const App: FC<WithAuthenticatorProps> = ({ signOut }) => {
   const [notes, setNotes] = useState([]);
@@ -31,10 +31,8 @@ const App: FC<WithAuthenticatorProps> = ({ signOut }) => {
     const notesFromAPI = apiData.data.listNotes.items;
     await Promise.all(
       notesFromAPI.map(async (note: Note) => {
-        if (note.image) {
-          const url = await Storage.get(note.name);
-          note.image = url;
-        }
+        const url = await Storage.get(note.name);
+        note.image = url;
         return note;
       })
     );
@@ -46,21 +44,19 @@ const App: FC<WithAuthenticatorProps> = ({ signOut }) => {
     const form = new FormData(event.target);
     const image = form.get("image") as any;
     const name = form.get("name") as string;
+    const description = form.get("description") as string;
 
-    const data = {
+    const data: CreateNoteInput = {
       name,
-      description: form.get("description"),
-      image: image?.name,
+      description,
     };
 
-    if (!!data.image) {
-      await Storage.put(data.name, image);
-    }
-
+    await Storage.put(name, image);
     await API.graphql({
       query: createNoteMutation,
       variables: { input: data },
     });
+
     fetchNotes();
     event.target.reset();
   }
