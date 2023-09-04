@@ -1,138 +1,84 @@
-import { FC, useState, useEffect } from "react";
+import { FC, useState } from "react";
 import "@aws-amplify/ui-react/styles.css";
-import { API, Storage } from "aws-amplify";
 import {
-  Button,
   Flex,
-  Heading,
-  Image,
-  Text,
+  Menu,
+  MenuItem,
   TextField,
   View,
   withAuthenticator,
   WithAuthenticatorProps,
 } from "@aws-amplify/ui-react";
-import { listNotes } from "./graphql/queries";
-import {
-  createNote as createNoteMutation,
-  deleteNote as deleteNoteMutation,
-} from "./graphql/mutations";
-import { CreateNoteInput, Note } from "./API";
+import OpenAI from "openai";
+
+const configuration = {
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+  organization: import.meta.env.VITE_OPENAI_ORG_ID,
+  dangerouslyAllowBrowser: true,
+};
+
+const openai = new OpenAI(configuration);
 
 const App: FC<WithAuthenticatorProps> = ({ signOut }) => {
-  const [notes, setNotes] = useState([]);
+  const [rap, setRap] = useState("");
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
+  const getRap = async (prompt: string) => {
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You will be given a prompt and your job is to respond in rap",
+        },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 528,
+      n: 1,
+      stop: null,
+      temperature: 0.8,
+    });
 
-  async function fetchNotes() {
-    const apiData = (await API.graphql({ query: listNotes })) as any;
-    const notesFromAPI = apiData.data.listNotes.items;
-    await Promise.all(
-      notesFromAPI.map(async (note: Note) => {
-        const url = await Storage.get(note.name);
-        note.image = url;
-        return note;
-      })
-    );
-    setNotes(notesFromAPI);
-  }
+    console.log(response);
+    setRap(response.choices[0].message.content as string);
+  };
 
-  async function createNote(event: any) {
+  const handleSubmit = (event: any) => {
     event.preventDefault();
     const form = new FormData(event.target);
-    const image = form.get("image") as any;
-    const name = form.get("name") as string;
-    const description = form.get("description") as string;
+    const prompt = form.get("prompt") as string;
 
-    const data: CreateNoteInput = {
-      name,
-      description,
-    };
+    getRap(prompt);
 
-    await Storage.put(name, image);
-    await API.graphql({
-      query: createNoteMutation,
-      variables: { input: data },
-    });
-
-    fetchNotes();
     event.target.reset();
-  }
-
-  async function deleteNote({ id, name }: Note) {
-    const newNotes = notes.filter((note: Note) => note.id !== id);
-    setNotes(newNotes);
-    await Storage.remove(name);
-    await API.graphql({
-      query: deleteNoteMutation,
-      variables: { input: { id } },
-    });
-  }
+  };
 
   return (
-    <>
-      <View className="App">
-        <Heading level={1}>My Notes App</Heading>
-        <View as="form" margin="3rem 0" onSubmit={createNote}>
-          <Flex direction="row" justifyContent="center">
+    <Flex justifyContent="center" alignItems="center">
+      <View width="30rem">
+        <Flex gap="5rem" direction="column">
+          <View>
+            <Menu menuAlign="start">
+              <MenuItem onClick={signOut}>Sign Out</MenuItem>
+            </Menu>
+          </View>
+
+          <View as="form" onSubmit={handleSubmit}>
             <TextField
-              name="name"
-              placeholder="Note Name"
-              label="Note Name"
+              name="prompt"
+              placeholder="type here"
+              label="Prompt"
               labelHidden
-              variation="quiet"
               required
             />
-            <TextField
-              name="description"
-              placeholder="Note Description"
-              label="Note Description"
-              labelHidden
-              variation="quiet"
-              required
-            />
-            <View
-              name="image"
-              as="input"
-              type="file"
-              style={{ alignSelf: "end" }}
-            />
-            <Button type="submit" variation="primary">
-              Create Note
-            </Button>
-          </Flex>
-        </View>
-        <Heading level={2}>Current Notes</Heading>
-        <View margin="3rem 0">
-          {notes.map((note: Note) => (
-            <Flex
-              key={note.id || note.name}
-              direction="row"
-              justifyContent="center"
-              alignItems="center"
-            >
-              <Text as="strong" fontWeight={700}>
-                {note.name}
-              </Text>
-              <Text as="span">{note.description}</Text>
-              {note.image && (
-                <Image
-                  src={note.image}
-                  alt={`visual aid for ${note.name}`}
-                  style={{ width: 400 }}
-                />
-              )}
-              <Button variation="link" onClick={() => deleteNote(note)}>
-                Delete note
-              </Button>
-            </Flex>
-          ))}
-        </View>
-        <Button onClick={signOut}>Sign Out</Button>
+          </View>
+
+          <View>
+            <View as="span">{rap}</View>
+          </View>
+        </Flex>
       </View>
-    </>
+    </Flex>
   );
 };
 
