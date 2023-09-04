@@ -17,7 +17,7 @@ import {
   createNote as createNoteMutation,
   deleteNote as deleteNoteMutation,
 } from "./graphql/mutations";
-import { Note } from "./API";
+import { DeleteNoteInput, Note } from "./API";
 
 const App: FC<WithAuthenticatorProps> = ({ signOut }) => {
   const [notes, setNotes] = useState([]);
@@ -27,7 +27,9 @@ const App: FC<WithAuthenticatorProps> = ({ signOut }) => {
   }, []);
 
   async function fetchNotes() {
-    const apiData = await API.graphql({ query: listNotes });
+    const apiData = (await API.graphql({
+      query: listNotes,
+    })) as any;
     const notesFromAPI = apiData.data.listNotes.items;
     setNotes(notesFromAPI);
   }
@@ -47,7 +49,7 @@ const App: FC<WithAuthenticatorProps> = ({ signOut }) => {
     event.target.reset();
   }
 
-  async function deleteNote({ id }: Note) {
+  async function deleteNote({ id }: DeleteNoteInput) {
     const newNotes = notes.filter((note: Note) => note.id !== id);
     setNotes(newNotes);
     await API.graphql({
