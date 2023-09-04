@@ -1,3 +1,4 @@
+import { FC } from "react";
 import "@aws-amplify/ui-react/styles.css";
 import {
   withAuthenticator,
@@ -5,9 +6,10 @@ import {
   Heading,
   View,
   Card,
+  WithAuthenticatorProps,
 } from "@aws-amplify/ui-react";
 
-function App({ signOut }) {
+const App: FC<WithAuthenticatorProps> = ({ signOut }) => {
   return (
     <View className="App">
       <Card>
@@ -16,6 +18,6 @@ function App({ signOut }) {
       <Button onClick={signOut}>Sign Out</Button>
     </View>
   );
-}
+};
 
 export default withAuthenticator(App);
