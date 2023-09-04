@@ -8,11 +8,10 @@ backend:
 frontend:
   phases:
     preBuild:
-      commands:
-        - yarn install
+      commands: -npm ci
     build:
       commands:
-        - yarn run build
+        - npm run build
   artifacts:
     baseDirectory: dist/
     files:
